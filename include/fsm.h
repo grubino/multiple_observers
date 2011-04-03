@@ -9,6 +9,7 @@
 #include "state.h"
 #include "event.h"
 
+
 namespace simple_state_machine {
 
   class fsm {
@@ -17,11 +18,12 @@ namespace simple_state_machine {
     explicit fsm(const state& start)
       : m_current_state(&start) {}
     ~fsm() {}
-    void transition(const event& e) {
+    virtual void transition(const event& e) {
       boost::mutex::scoped_lock l(m_mutex);
       m_current_state = &((*m_current_state)[e]);
     }
-    const state& current() const { return *m_current_state; }
+    virtual const state& current() const { return *m_current_state; }
+    virtual ~fsm() {}
   private:
     const state* m_current_state;
     boost::mutex m_mutex;
