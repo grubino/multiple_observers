@@ -34,14 +34,20 @@ int main(void) {
 
   for(unsigned int i = 0; i < 50; ++i) {
     states[i].insert(make_pair(events+i, states + ((i+1)%50)));
-    cout << "adding transition: " << states[i].id() << " => " << states[i][events[i]].id() << 
+    cout << "adding transition: " <<
+      states[i].id() << " => " <<
+      states[i][events[i]].id() << 
       " on event: " << events[i].id() << endl;
     states[i].insert(make_pair(events+(i+1)%50, states + ((i+2)%50)));
-    cout << "adding transition: " << states[i].id() << " => " << states[i][events[i]].id() << 
-      " on event: " << events[i].id() << endl;
+    cout << "adding transition: " <<
+      states[i].id() << " => " <<
+      states[i][events[(i+1)%50]].id() << 
+      " on event: " << events[(i+1)%50].id() << endl;
     states[i].insert(make_pair(events+(i+2)%50, states + ((i+3)%50)));
-    cout << "adding transition: " << states[i].id() << " => " << states[i][events[i]].id() << 
-      " on event: " << events[i].id() << endl;
+    cout << "adding transition: " <<
+      states[i].id() << " => " <<
+      states[i][events[(i+2)%50]].id() << 
+      " on event: " << events[(i+2)%50].id() << endl;
   }
     
   fsm my_fsm(states[0]);

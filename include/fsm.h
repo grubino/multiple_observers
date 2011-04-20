@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <exception>
 
 #include <boost/thread.hpp>
 
@@ -12,21 +13,29 @@
 
 namespace simple_state_machine {
 
+  class invalid_transition : public std::runtime_error {
+  public:
+    explicit invalid_transition(const std::string& what)
+      : std::runtime_error(what) {}
+  };
+  
   class fsm {
+
   public:
     typedef std::map<event, state> transition_map;
+    
     explicit fsm(const state& start)
       : m_current_state(&start) {}
-    ~fsm() {}
-    virtual void transition(const event& e) {
-      boost::mutex::scoped_lock l(m_mutex);
-      m_current_state = &((*m_current_state)[e]);
-    }
-    virtual const state& current() const { return *m_current_state; }
+    
     virtual ~fsm() {}
-  private:
+    
+    virtual void transition(const event& e) throw(invalid_transition);
+    const state& current() const { return *m_current_state; }
+    
+  protected:
     const state* m_current_state;
     boost::mutex m_mutex;
+    
   };
   
 }

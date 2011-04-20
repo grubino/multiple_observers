@@ -23,9 +23,10 @@ namespace simple_state_machine {
     void insert(const transition& t) { m_transitions.insert(t); }
     const state& operator[](const event& e) const { return *m_transitions.at(&e); }
     const transition_map& get_transition_map() const { return m_transitions; }
+
   private:
     transition_map m_transitions;
   };
-  
+
 }
 #endif

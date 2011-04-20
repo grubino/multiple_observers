@@ -14,7 +14,7 @@ namespace simple_state_machine {
       
     }
     catch (const out_of_range& e) {
-      
+
       throw invalid_transition(e.what());
       
     }
