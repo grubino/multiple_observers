@@ -1,84 +1,53 @@
 #include <iostream>
 #include <sstream>
-#include <map>
 #include <utility>
 #include <string>
 
-#include <boost/thread.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
+
+#include <boost/graph/adjacency_list_io.hpp>
 
 #include "fsm.h"
 
 int main(void) {
 
   using namespace simple_state_machine;
+  using namespace boost;
   using namespace std;
 
-  void* _buffer_s = operator new(sizeof(state)*50);
-  void* _buffer_e = operator new(sizeof(event)*50);
+  fsm<string, string>::transition_map trans_map;
+
+  fsm<string, string>::state_descriptor
+    state_0 = add_vertex(string("__state_1"), trans_map);
+  fsm<string, string>::state_descriptor
+    state_1 = add_vertex(string("__state_2"), trans_map);
+  fsm<string, string>::state_descriptor
+    state_2 = add_vertex(string("__state_3"), trans_map);
   
-  state* states = static_cast<state*>(_buffer_s);
-  event* events = static_cast<event*>(_buffer_e);
+  add_edge(state_0, state_1, string("__event_1_2"), trans_map);
+  add_edge(state_0, state_2, string("__event_1_3"), trans_map);
+  add_edge(state_1, state_2, string("__event_2_3"), trans_map);
+  add_edge(state_2, state_0, string("__event_3_1"), trans_map);
 
-  for(unsigned int i = 0; i < 50; ++i) {
-    stringstream s;
-    s << i;
-    string state_name("state_" + s.str());
-    string event_name("event_" + s.str());
-    cout << "adding state: " << state_name << endl;
-    cout << "adding event: " << event_name << endl;
-    new(states+i) state(state_name);
-    new(events+i) event(event_name);
-  }
+  graph_traits<fsm<string, string>::transition_map>::vertex_iterator
+    start = vertices(trans_map).first;
 
-  for(unsigned int i = 0; i < 50; ++i) {
-    states[i].insert(make_pair(events+i, states + ((i+1)%50)));
-    cout << "adding transition: " <<
-      states[i].id() << " => " <<
-      states[i][events[i]].id() << 
-      " on event: " << events[i].id() << endl;
-    states[i].insert(make_pair(events+(i+1)%50, states + ((i+2)%50)));
-    cout << "adding transition: " <<
-      states[i].id() << " => " <<
-      states[i][events[(i+1)%50]].id() << 
-      " on event: " << events[(i+1)%50].id() << endl;
-    states[i].insert(make_pair(events+(i+2)%50, states + ((i+3)%50)));
-    cout << "adding transition: " <<
-      states[i].id() << " => " <<
-      states[i][events[(i+2)%50]].id() << 
-      " on event: " << events[(i+2)%50].id() << endl;
-  }
-    
-  fsm my_fsm(states[0]);
+  fsm<string, string> my_fsm(*start, trans_map);
 
-  cout << "current state: " << my_fsm.current().id() << endl;
-  for(unsigned int i = 0; i < 50; ++i) {
-    try {
-      state::transition_map m(my_fsm.current().get_transition_map());
-      BOOST_FOREACH(state::transition t, m) {
-	cout << my_fsm.current().id() << " => " << t.second->id() << 
-	  " on event " << t.first->id() << endl;
-      }
+  cout << my_fsm.current() << endl;
+  my_fsm.process_event(string("__event_1_2"));
 
-      cout << my_fsm.current().id() << " => " << my_fsm.current()[events[i]].id() << endl;
-      my_fsm.transition(events[i]);
-    }
-    catch (const out_of_range& e) {
-      cerr << "there was an error accessing event " << i << endl;
-      cerr << "the error was: " << e.what() << endl;
-    }
-    cout << "current state is: " << my_fsm.current().id() << endl;
-  }
+  cout << my_fsm.current() << endl;
+  my_fsm.process_event(string("__event_2_3"));
 
-  for(unsigned int i = 0; i < 50; ++i) {
-    states[49-i].~state();
-    events[49-i].~event();
-  }
+  cout << my_fsm.current() << endl;
+  my_fsm.process_event(string("__event_3_1"));
 
-  operator delete [](_buffer_s);
-  operator delete [](_buffer_e);
-  
+  cout << my_fsm.current() << endl;
+  my_fsm.process_event(string("__event_1_3"));
+
+  cout << my_fsm.current() << endl;
+
   return 0;
   
 }

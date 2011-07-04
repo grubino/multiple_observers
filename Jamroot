@@ -2,11 +2,11 @@ project multiple_observers :
    requirements <include>include ;
 
 exe main :
-   src/main.cpp src/fsm.cpp src/observer.cpp ;
+   src/main.cpp	;
 
 alias unit_test_lib :
    /usr/local/lib/libboost_unit_test_framework.a ;
    
 exe test :
-   src/unit_tests.cpp src/fsm.cpp src/observer.cpp :
+   src/unit_tests.cpp :
    <library>unit_test_lib <link>shared ;
