@@ -53,8 +53,6 @@ namespace simple_state_machine {
       , typename transition_map::out_edge_iterator
       > state_events;
 
-    struct insert_equal_event;
-
     explicit fsm(
 		 const state_descriptor& start
 		 , const transition_map& map
@@ -76,62 +74,37 @@ namespace simple_state_machine {
 
   private:
 
+    static bool __equal_event_pred(const transition_map& tmap
+				   , const event_descriptor& other
+				   , const Event& cmp_event) { return tmap[other] == cmp_event; }
+
+    static bool __not_equal_event_pred(const transition_map& tmap
+				       , const event_descriptor& other
+				       , const Event& cmp_event) { return tmap[other] != cmp_event; }
+    
   };
 
   
-  template <
-  class Event
-    , class TransitionMap
-    , class OutputIterator
-    >
-    struct equal_event_inserter {
-    equal_event_inserter(
-			 const Event& search_event
-			 , const TransitionMap& tmap
-			 , OutputIterator out_it
-			 )
-    : m_search_event(search_event)
-    , m_map(tmap)
-      , m_out(out_it)
-      {}
-      void operator()(const typename TransitionMap::edge_descriptor& event_d) {
-	if(m_map[event_d] == m_search_event) {
-	  m_out = event_d;
-	}
-      }
-    private:
-      const Event& m_search_event;
-      const TransitionMap& m_map;
-      OutputIterator m_out;
-    };
-  
-  
   template <class State, class Event>
     void fsm<State, Event>::process_event(const Event& e) {
-    
-    typedef std::list<event_descriptor> possible_event_list;
-    
+
     boost::mutex::scoped_lock l(m_mutex);
-    
+
     state_events events(
 			out_edges(
 				  m_current_state
 				  , m_transition_map
 				  )
 			);
-    possible_event_list possible_events;
+    std::list<event_descriptor> possible_events;
     
-    equal_event_inserter<
-    Event
-      , transition_map
-      , std::back_insert_iterator<possible_event_list>
-      > event_inserter(
-		       e
-		       , m_transition_map
-		       , std::back_inserter(possible_events)
-		       );
-    
-    for_each(events.first, events.second, event_inserter);
+    std::remove_copy_if(events.first
+			, events.second
+			, std::back_inserter(possible_events)
+			, boost::bind<bool>(&__not_equal_event_pred
+					    , m_transition_map
+					    , _1
+					    , e));
     
     if(possible_events.empty()) {
       throw vocabulary_fault("event is not defined for current state.");

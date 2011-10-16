@@ -3,13 +3,17 @@
 #include <iterator>
 #include <algorithm>
 #include <boost/test/unit_test.hpp>
+#include <boost/assign.hpp>
 
 #include "fsm.h"
+#include "detail/riffle_shuffle.h"
+#include "detail/decomposition.h"
 
 using namespace boost::unit_test;
 using namespace std;
 using namespace boost;
 using namespace simple_state_machine;
+using namespace multiple_observers;
 
 BOOST_AUTO_TEST_CASE(check_fsm_functionality) {
 
@@ -131,6 +135,144 @@ BOOST_AUTO_TEST_CASE(check_fsm_performance) {
   
 }
 
+BOOST_AUTO_TEST_CASE(riffle_shuffle_test) {
+
+  vector<int> a = assign::list_of(0)(1)(2)(3)(4);
+  vector<int> b = assign::list_of(5)(6)(7)(8)(9);
+  vector<int> shuffled;
+
+  multiple_observers::detail::riffle_shuffle(a.begin()
+					       , a.end()
+					       , b.begin()
+					       , b.end()
+					       , back_inserter(shuffled));
+
+  BOOST_CHECK_MESSAGE(shuffled[0] == 0, "shuffled[0] == " << shuffled[0]);
+  BOOST_CHECK_MESSAGE(shuffled[1] == 5, "shuffled[1] == " << shuffled[1]);
+  BOOST_CHECK_MESSAGE(shuffled[2] == 1, "shuffled[2] == " << shuffled[2]);
+  BOOST_CHECK_MESSAGE(shuffled[3] == 6, "shuffled[3] == " << shuffled[3]);
+  BOOST_CHECK_MESSAGE(shuffled[4] == 2, "shuffled[4] == " << shuffled[4]);
+  BOOST_CHECK_MESSAGE(shuffled[5] == 7, "shuffled[5] == " << shuffled[5]);
+  BOOST_CHECK_MESSAGE(shuffled[6] == 3, "shuffled[6] == " << shuffled[6]);
+  BOOST_CHECK_MESSAGE(shuffled[7] == 8, "shuffled[7] == " << shuffled[7]);
+  BOOST_CHECK_MESSAGE(shuffled[8] == 4, "shuffled[8] == " << shuffled[8]);
+  BOOST_CHECK_MESSAGE(shuffled[9] == 9, "shuffled[9] == " << shuffled[9]);
+
+  a = assign::list_of(0)(1)(2)(3)(4);
+  b = assign::list_of(5)(6);
+  shuffled.clear();
+
+  multiple_observers::detail::riffle_shuffle(a.begin()
+					       , a.end()
+					       , b.begin()
+					       , b.end()
+					       , back_inserter(shuffled));
+
+  BOOST_CHECK_MESSAGE(shuffled[0] == 0, "shuffled[0] == " << shuffled[0]);
+  BOOST_CHECK_MESSAGE(shuffled[1] == 5, "shuffled[1] == " << shuffled[1]);
+  BOOST_CHECK_MESSAGE(shuffled[2] == 1, "shuffled[2] == " << shuffled[2]);
+  BOOST_CHECK_MESSAGE(shuffled[3] == 6, "shuffled[3] == " << shuffled[3]);
+  BOOST_CHECK_MESSAGE(shuffled[4] == 2, "shuffled[4] == " << shuffled[4]);
+  BOOST_CHECK_MESSAGE(shuffled[5] == 3, "shuffled[5] == " << shuffled[5]);
+  BOOST_CHECK_MESSAGE(shuffled[6] == 4, "shuffled[6] == " << shuffled[6]);
+  
+}
+
+BOOST_AUTO_TEST_CASE(decomposition_test) {
+
+  vector<int> input = assign::list_of(0)(1)(2)(3)(4)(5)(6)(7)(8)(9);
+  vector<int> left;
+  vector<int> right;
+
+  using multiple_observers::detail::decomposition;
+
+  decomposition<vector<int>::iterator> d(input.begin(), input.end());
+  
+  d(back_inserter(left), back_inserter(right));
+  
+  BOOST_CHECK_MESSAGE(left[0] == 0, "left[0] == " << left[0]);
+  BOOST_CHECK_MESSAGE(left[1] == 5, "left[1] == " << left[1]);
+  BOOST_CHECK_MESSAGE(left[2] == 1, "left[2] == " << left[2]);
+  BOOST_CHECK_MESSAGE(left[3] == 6, "left[3] == " << left[3]);
+  BOOST_CHECK_MESSAGE(left[4] == 2, "left[4] == " << left[4]);
+
+  BOOST_CHECK_MESSAGE(right[0] == 7, "right[0] == " << right[0]);
+  BOOST_CHECK_MESSAGE(right[1] == 3, "right[1] == " << right[1]);
+  BOOST_CHECK_MESSAGE(right[2] == 8, "right[2] == " << right[2]);
+  BOOST_CHECK_MESSAGE(right[3] == 4, "right[3] == " << right[3]);
+  BOOST_CHECK_MESSAGE(right[4] == 9, "right[4] == " << right[4]);
+
+  d(left.begin(), right.begin());
+  
+  BOOST_CHECK_MESSAGE(left[0] == 0, "left[0] == " << left[0]);
+  BOOST_CHECK_MESSAGE(left[1] == 7, "left[1] == " << left[1]);
+  BOOST_CHECK_MESSAGE(left[2] == 5, "left[2] == " << left[2]);
+  BOOST_CHECK_MESSAGE(left[3] == 3, "left[3] == " << left[3]);
+  BOOST_CHECK_MESSAGE(left[4] == 1, "left[4] == " << left[4]);
+
+  BOOST_CHECK_MESSAGE(right[0] == 8, "right[0] == " << right[0]);
+  BOOST_CHECK_MESSAGE(right[1] == 6, "right[1] == " << right[1]);
+  BOOST_CHECK_MESSAGE(right[2] == 4, "right[2] == " << right[2]);
+  BOOST_CHECK_MESSAGE(right[3] == 2, "right[3] == " << right[3]);
+  BOOST_CHECK_MESSAGE(right[4] == 9, "right[4] == " << right[4]);
+
+  d(left.begin(), right.begin());
+  
+  BOOST_CHECK_MESSAGE(left[0] == 0, "left[0] == " << left[0]);
+  BOOST_CHECK_MESSAGE(left[1] == 8, "left[1] == " << left[1]);
+  BOOST_CHECK_MESSAGE(left[2] == 7, "left[2] == " << left[2]);
+  BOOST_CHECK_MESSAGE(left[3] == 6, "left[3] == " << left[3]);
+  BOOST_CHECK_MESSAGE(left[4] == 5, "left[4] == " << left[4]);
+
+  BOOST_CHECK_MESSAGE(right[0] == 4, "right[0] == " << right[0]);
+  BOOST_CHECK_MESSAGE(right[1] == 3, "right[1] == " << right[1]);
+  BOOST_CHECK_MESSAGE(right[2] == 2, "right[2] == " << right[2]);
+  BOOST_CHECK_MESSAGE(right[3] == 1, "right[3] == " << right[3]);
+  BOOST_CHECK_MESSAGE(right[4] == 9, "right[4] == " << right[4]);
+
+  d(left.begin(), right.begin());
+  
+  BOOST_CHECK_MESSAGE(left[0] == 0, "left[0] == " << left[0]);
+  BOOST_CHECK_MESSAGE(left[1] == 4, "left[1] == " << left[1]);
+  BOOST_CHECK_MESSAGE(left[2] == 8, "left[2] == " << left[2]);
+  BOOST_CHECK_MESSAGE(left[3] == 3, "left[3] == " << left[3]);
+  BOOST_CHECK_MESSAGE(left[4] == 7, "left[4] == " << left[4]);
+
+  BOOST_CHECK_MESSAGE(right[0] == 2, "right[0] == " << right[0]);
+  BOOST_CHECK_MESSAGE(right[1] == 6, "right[1] == " << right[1]);
+  BOOST_CHECK_MESSAGE(right[2] == 1, "right[2] == " << right[2]);
+  BOOST_CHECK_MESSAGE(right[3] == 5, "right[3] == " << right[3]);
+  BOOST_CHECK_MESSAGE(right[4] == 9, "right[4] == " << right[4]);
+
+  d(left.begin(), right.begin());
+  
+  BOOST_CHECK_MESSAGE(left[0] == 0, "left[0] == " << left[0]);
+  BOOST_CHECK_MESSAGE(left[1] == 2, "left[1] == " << left[1]);
+  BOOST_CHECK_MESSAGE(left[2] == 4, "left[2] == " << left[2]);
+  BOOST_CHECK_MESSAGE(left[3] == 6, "left[3] == " << left[3]);
+  BOOST_CHECK_MESSAGE(left[4] == 8, "left[4] == " << left[4]);
+
+  BOOST_CHECK_MESSAGE(right[0] == 1, "right[0] == " << right[0]);
+  BOOST_CHECK_MESSAGE(right[1] == 3, "right[1] == " << right[1]);
+  BOOST_CHECK_MESSAGE(right[2] == 5, "right[2] == " << right[2]);
+  BOOST_CHECK_MESSAGE(right[3] == 7, "right[3] == " << right[3]);
+  BOOST_CHECK_MESSAGE(right[4] == 9, "right[4] == " << right[4]);
+
+  d(left.begin(), right.begin());
+  
+  BOOST_CHECK_MESSAGE(left[0] == 0, "left[0] == " << left[0]);
+  BOOST_CHECK_MESSAGE(left[1] == 1, "left[1] == " << left[1]);
+  BOOST_CHECK_MESSAGE(left[2] == 2, "left[2] == " << left[2]);
+  BOOST_CHECK_MESSAGE(left[3] == 3, "left[3] == " << left[3]);
+  BOOST_CHECK_MESSAGE(left[4] == 4, "left[4] == " << left[4]);
+
+  BOOST_CHECK_MESSAGE(right[0] == 5, "right[0] == " << right[0]);
+  BOOST_CHECK_MESSAGE(right[1] == 6, "right[1] == " << right[1]);
+  BOOST_CHECK_MESSAGE(right[2] == 7, "right[2] == " << right[2]);
+  BOOST_CHECK_MESSAGE(right[3] == 8, "right[3] == " << right[3]);
+  BOOST_CHECK_MESSAGE(right[4] == 9, "right[4] == " << right[4]);
+
+}
 
 test_suite* init_unit_test_suite(int argc, char** argv) {
 
